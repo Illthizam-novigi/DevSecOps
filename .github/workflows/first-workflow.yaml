@@ -18,10 +18,13 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '20'
-          cache: 'npm'
+        #   cache: 'npm'
 
       - name: Install dependencies
         run: npm install
+
+      - name: install typescript dependencies
+        run: npm install typescript
 
       - name: Build typescript
         run: npm run build
