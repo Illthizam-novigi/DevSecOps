@@ -19,12 +19,43 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '20'
-        #   cache: 'npm'
 
-      - name: Install dependencies
+      - name: Cache node modules
+        id: cache-npm
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: Install dependencies
         run: npm install
 
-      - name: install typescript dependencies
+
+      - name: Cache TypeScript build output
+        uses: actions/cache@v4
+        id: typescript-cache
+        with:
+          path: dist  # Or whatever your output directory is
+          key: ${{ runner.os }}-ts-build-${{ hashFiles('**/*.ts') }}-${{ hashFiles('tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ts-build-
+            ${{ runner.os }}-ts-build-${{ hashFiles('**/*.ts') }}
+
+      - if: ${{ steps.typescript-cache.outputs.cache-hit != 'true' }}
+        name: install typescript dependencies
         run: npm install typescript
 
       - name: Build typescript
