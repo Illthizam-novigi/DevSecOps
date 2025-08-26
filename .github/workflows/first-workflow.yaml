@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: Dev
 
     steps:
       - name: Checkout code
@@ -43,7 +44,20 @@ jobs:
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops
           docker build -t $IMAGE_NAME:latest .
 
-      - name: Push Docker image
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+        
+      - name: Build and Push Docker image
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops
-          docker push $IMAGE_NAME:latest
+          # Use branch name as tag, with 'latest' for main branch
+          if [ "$BRANCH_NAME" = "main" ]; then
+            TAG="latest"
+          else
+            TAG="$BRANCH_NAME"
+          fi
+          
+          docker build -t $IMAGE_NAME:$TAG .
+          docker push $IMAGE_NAME:$TAG
