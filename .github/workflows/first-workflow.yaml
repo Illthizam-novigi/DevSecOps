@@ -43,6 +43,21 @@ jobs:
         name: Install dependencies
         run: npm install
 
+
+      - name: Cache TypeScript build output
+        uses: actions/cache@v4
+        id: typescript-cache
+        with:
+          path: dist  # Or whatever your output directory is
+          key: ${{ runner.os }}-ts-build-${{ hashFiles('**/*.ts') }}-${{ hashFiles('tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ts-build-
+            ${{ runner.os }}-ts-build-${{ hashFiles('**/*.ts') }}
+
+      - if: ${{ steps.typescript-cache.outputs.cache-hit != 'true' }}
+        name: install typescript dependencies
+        run: npm install typescript
+
       - name: Build typescript
         run: npm run build
 
