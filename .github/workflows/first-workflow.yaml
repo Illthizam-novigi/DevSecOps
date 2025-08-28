@@ -90,29 +90,55 @@ jobs:
           docker build -t $IMAGE_NAME:latest .
 
 
+      # - name: Extract branch name
+      #   shell: bash
+      #   run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      # - name: Set Docker image environment
+      #   run: echo "IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops:latest" >> $GITHUB_ENV
+
+      # - name: Scan Docker image with Trivy
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: ${{ env.IMAGE }}
+      #     severity: CRITICAL,HIGH
+      #     ignore-unfixed: true
+
+      # - name: Build and Push Docker image
+      #   run: |
+      #     IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops
+      #     # Use branch name as tag, with 'latest' for main branch
+      #     if [ "$BRANCH_NAME" = "main" ]; then
+      #       TAG="latest"
+      #     else
+      #       TAG="$BRANCH_NAME"
+      #     fi
+          
+      #     docker build -t $IMAGE_NAME:$TAG .
+      #     docker push $IMAGE_NAME:$TAG}
       - name: Extract branch name
         shell: bash
         run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-        
-      - name: Set Docker image environment
-        run: echo "IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops:latest" >> $GITHUB_ENV
 
-      - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.IMAGE }}
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-
-      - name: Build and Push Docker image
+      - name: Build Docker image
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops
-          # Use branch name as tag, with 'latest' for main branch
           if [ "$BRANCH_NAME" = "main" ]; then
             TAG="latest"
           else
             TAG="$BRANCH_NAME"
           fi
-          
-          docker build -t $IMAGE_NAME:$TAG .
-          docker push $IMAGE_NAME:$TAG}
+          FULL_IMAGE="$IMAGE_NAME:$TAG"
+          echo "FULL_IMAGE=$FULL_IMAGE" >> $GITHUB_ENV
+          docker build -t $FULL_IMAGE .
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.FULL_IMAGE }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.FULL_IMAGE }}
