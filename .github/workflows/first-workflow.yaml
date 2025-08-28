@@ -59,10 +59,6 @@ jobs:
         run: npm install typescript
 
 
-      # 🔐 Security Scans
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v3
-
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v2
         with:
@@ -72,7 +68,7 @@ jobs:
       - name: Run npm audit
         run: npm audit --audit-level=high
         continue-on-error: true
-        
+
       - name: Build typescript
         run: npm run build
 
@@ -97,7 +93,14 @@ jobs:
       - name: Extract branch name
         shell: bash
         run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-        
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
       - name: Build and Push Docker image
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops
