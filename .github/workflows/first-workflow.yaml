@@ -93,6 +93,9 @@ jobs:
       - name: Extract branch name
         shell: bash
         run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+        
+      - name: Set Docker image environment
+        run: echo "IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/illthizam_dev_sec_ops:latest" >> $GITHUB_ENV
 
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@master
